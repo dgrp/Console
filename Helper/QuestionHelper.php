@@ -146,7 +146,9 @@ class QuestionHelper extends Helper
                 $ret = trim($ret);
             }
         } else {
-            $ret = trim($this->autocomplete($output, $question, $inputStream));
+            $chunks = explode("\n", $message);
+            $startPos = strlen(array_pop($chunks)) + 1;
+            $ret = trim($this->autocomplete($output, $question, $inputStream, $startPos));
         }
 
         $ret = strlen($ret) > 0 ? $ret : $question->getDefault();
@@ -166,7 +168,7 @@ class QuestionHelper extends Helper
      *
      * @return string
      */
-    private function autocomplete(OutputInterface $output, Question $question, $inputStream)
+    private function autocomplete(OutputInterface $output, Question $question, $inputStream, $startPos = 0)
     {
         $autocomplete = $question->getAutocompleterValues();
         $ret = '';
@@ -227,8 +229,13 @@ class QuestionHelper extends Helper
                 if ("\t" === $c || "\n" === $c) {
                     if ($numMatches > 0 && -1 !== $ofs) {
                         $ret = $matches[$ofs];
+                        // Move cursor to beginning of input
+                        $output->write("\033[" . $startPos . "G");
+                        // Erase entire input
+                        $output->write("\033[K");
                         // Echo out remaining chars for current match
-                        $output->write(substr($ret, $i));
+                        //$output->write(substr($ret, $i));
+                        $output->write($ret);
                         $i = strlen($ret);
                     }
 
